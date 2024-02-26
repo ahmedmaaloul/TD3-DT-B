@@ -6,12 +6,13 @@ exports.getProducts = async (req, res) => {
     const { category, inStock } = req.query;
 
     if (category) {
-      query.category = category;
+      // Use a regular expression to search for products that contain the category string
+      query.category = { $regex: category, $options: 'i' }; // 'i' for case-insensitive matching
     }
 
     if (inStock) {
-      const stockStatus = inStock === 'true' ? { $gt: 0 } : 0; // $gt: 0 for inStock items, 0 for out of stock
-      query.stockStatus = stockStatus;
+      const stockStatus = inStock === 'true' ? { $gt: 0 } : { $eq: 0 }; // $eq: 0 for out of stock
+      query.stock = stockStatus; // Assuming the field for stock is 'stock'
     }
 
     const products = await Product.find(query);

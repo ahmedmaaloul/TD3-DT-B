@@ -5,39 +5,57 @@ const Cart = ({ userId }) => {
   const [cart, setCart] = useState({ products: [] });
 
   useEffect(() => {
+    const fetchCart = async () => {
+      try {
+        const response = await axios.get(`http://localhost:2020/cart/${userId}`);
+        console.log(response.data)
+        setCart(response.data);
+      } catch (error) {
+        console.error("Failed to fetch cart:", error);
+      }
+    };
+
     fetchCart();
   }, [userId]);
 
-  const fetchCart = async () => {
-    try {
-      const response = await axios.get(`http://localhost:3000/cart/${userId}`);
-      setCart(response.data);
-    } catch (error) {
-      console.error("Failed to fetch cart:", error);
-    }
-  };
-
   const removeItemFromCart = async (productId) => {
     try {
-      await axios.delete(`http://localhost:3000/cart/${userId}/item/${productId}`);
-      fetchCart(); // Refresh cart contents after removal
+      await axios.delete(`http://localhost:2020/cart/${userId}/item/${productId}`);
+      setCart(currentCart => ({...currentCart}));
     } catch (error) {
       console.error("Failed to remove item from cart:", error);
     }
   };
 
+  const validateCartAsOrder = async () => {
+    try {
+      const response = await axios.post('http://localhost:2020/orders', {
+        userId,
+        products: cart.products,
+      });
+      alert(`Order ${response.data._id} created successfully!`);
+      await axios.delete(`http://localhost:2020/cart/clear/${userId}`);
+      setCart({ products: [], totalPrice: 0 });
+    } catch (error) {
+      console.error("Failed to validate cart as order:", error);
+    }
+  };
+
   return (
-    <div>
+    <div className="container mt-3">
       <h2>Cart</h2>
-      <ul>
+      <div className="list-group">
         {cart.products.map((item, index) => (
-          <li key={index}>
+          <div key={index} className="list-group-item d-flex justify-content-between align-items-center">
             Product ID: {item.productId}, Quantity: {item.quantity}
-            <button onClick={() => removeItemFromCart(item.productId)}>Remove</button>
-          </li>
+            <button className="btn btn-danger btn-sm" onClick={() => removeItemFromCart(item.productId)}>Remove</button>
+          </div>
         ))}
-      </ul>
-      <p>Total Price: ${cart.totalPrice}</p>
+      </div>
+      <div className="mt-3">
+        <p>Total Price: €{cart.totalPrice}</p>
+        <button className="btn btn-primary" onClick={validateCartAsOrder}>Validate Cart as Order</button>
+      </div>
     </div>
   );
 };

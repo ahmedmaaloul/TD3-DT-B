@@ -24,7 +24,7 @@ const CreateOrder = ({ userId }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:3000/orders', orderDetails);
+      const response = await axios.post('http://localhost:2020/orders', orderDetails);
       alert(`Order created successfully with ID: ${response.data._id}`);
       // Reset form or redirect user as needed
       setOrderDetails({ products: [], userId: userId }); // Reset order details

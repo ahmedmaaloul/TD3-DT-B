@@ -7,7 +7,7 @@ const AddToCart = ({ userId, productId }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`http://localhost:3000/cart/${userId}`, {
+      await axios.post(`http://localhost:2020/cart/${userId}`, {
         productId,
         quantity
       });

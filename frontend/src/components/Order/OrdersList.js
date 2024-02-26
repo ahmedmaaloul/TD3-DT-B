@@ -7,8 +7,19 @@ const OrdersList = ({ userId }) => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await axios.get(`http://localhost:3000/orders/${userId}`);
-        setOrders(response.data);
+        const response = await axios.get(`http://localhost:2020/orders/${userId}`);
+        const ordersWithDetails = await Promise.all(response.data.map(async (order) => {
+          const productsWithDetails = await Promise.all(order.products.map(async (product) => {
+            const productResponse = await axios.get(`http://localhost:2020/products/${product.productId}`);
+            return {
+              ...product,
+              name: productResponse.data.name,
+              price: productResponse.data.price,
+            };
+          }));
+          return { ...order, products: productsWithDetails };
+        }));
+        setOrders(ordersWithDetails);
       } catch (error) {
         console.error("Failed to fetch orders:", error);
       }
@@ -18,34 +29,42 @@ const OrdersList = ({ userId }) => {
   }, [userId]);
 
   return (
-    <div>
+    <div className="container mt-4">
       <h2>Orders</h2>
       {orders.length > 0 ? (
-        <ul>
-          {orders.map(order => (
-            <li key={order._id}>
-              <strong>Order ID:</strong> {order._id}, <strong>Total Price:</strong> ${order.totalPrice}, <strong>Status:</strong> {order.status}
-              <h4>Products</h4>
-              {order.products.length > 0 ? (
-                <ul>
+        orders.map(order => (
+          <div key={order._id} className="card mb-3">
+            <div className="card-header">
+              Order ID: {order._id}
+            </div>
+            <div className="card-body">
+              <h5 className="card-title">Total Price: €{order.totalPrice}</h5>
+              <p className="card-text">Status: {order.status}</p>
+              <h6>Products</h6>
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Product ID</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Price</th>
+                    <th scope="col">Quantity</th>
+                  </tr>
+                </thead>
+                <tbody>
                   {order.products.map((item, index) => (
-                    <li key={index}>
-                      <strong>Product ID:</strong> {item.productId}
-                      , <strong>Name:</strong> {item.name || 'Product name not available'}
-                      , <strong>Price:</strong> €{item.price || 'N/A'}
-                      , <strong>Quantity:</strong> {item.quantity}
-                    </li>
+                    <tr key={index}>
+                      <td>{item.productId}</td>
+                      <td>{item.name}</td>
+                      <td>€{item.price}</td>
+                      <td>{item.quantity}</td>
+                    </tr>
                   ))}
-                </ul>
-              ) : (
-                <p>This order has no products listed.</p>
-              )}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>No orders found.</p>
-      )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ))
+      ) : <p>No orders found.</p>}
     </div>
   );
 };
